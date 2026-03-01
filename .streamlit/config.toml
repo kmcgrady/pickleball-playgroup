@@ -1,0 +1,91 @@
+# Pickleball Playgroup Theme
+# Court green + vibrant yellow accent inspired by pickleballs and court colors
+
+[theme]
+font = "'Inter':https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+headingFont = "'Outfit':https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&display=swap"
+baseFontSize = 14
+baseFontWeight = 400
+headingFontSizes = ["32px", "24px", "20px", "16px", "14px", "12px"]
+headingFontWeights = [700, 600, 600, 500, 500, 500]
+linkUnderline = false
+baseRadius = "10px"
+buttonRadius = "full"
+showWidgetBorder = true
+showSidebarBorder = false
+
+# --- Light mode ---
+[theme.light]
+primaryColor = "#2E7D32"
+backgroundColor = "#FAFDF7"
+secondaryBackgroundColor = "#E8F5E9"
+textColor = "#1B3A1D"
+linkColor = "#2E7D32"
+borderColor = "#C8E6C9"
+codeBackgroundColor = "#E8F5E9"
+codeTextColor = "#1B3A1D"
+
+greenColor = "#2E7D32"
+greenBackgroundColor = "#C8E6C9"
+greenTextColor = "#1B5E20"
+yellowColor = "#F9A825"
+yellowBackgroundColor = "#FFF9C4"
+yellowTextColor = "#F57F17"
+redColor = "#C62828"
+redBackgroundColor = "#FFCDD2"
+redTextColor = "#B71C1C"
+blueColor = "#1565C0"
+orangeColor = "#EF6C00"
+violetColor = "#6A1B9A"
+grayColor = "#546E52"
+
+chartCategoricalColors = ["#2E7D32", "#F9A825", "#1565C0", "#EF6C00", "#6A1B9A", "#C62828", "#00838F"]
+
+dataframeBorderColor = "#C8E6C9"
+dataframeHeaderBackgroundColor = "#E8F5E9"
+
+[theme.light.sidebar]
+backgroundColor = "#1B5E20"
+secondaryBackgroundColor = "#2E7D32"
+codeBackgroundColor = "#256427"
+textColor = "#E8F5E9"
+borderColor = "#388E3C"
+primaryColor = "#F9A825"
+
+# --- Dark mode ---
+[theme.dark]
+primaryColor = "#66BB6A"
+backgroundColor = "#0F1A10"
+secondaryBackgroundColor = "#1A2E1B"
+textColor = "#E0F2E1"
+linkColor = "#81C784"
+borderColor = "#2E5530"
+codeBackgroundColor = "#1A2E1B"
+codeTextColor = "#C8E6C9"
+
+greenColor = "#66BB6A"
+greenBackgroundColor = "#1B3A1D"
+greenTextColor = "#A5D6A7"
+yellowColor = "#FFD54F"
+yellowBackgroundColor = "#3E2E05"
+yellowTextColor = "#FFE082"
+redColor = "#EF5350"
+redBackgroundColor = "#3E1010"
+redTextColor = "#EF9A9A"
+blueColor = "#42A5F5"
+orangeColor = "#FFA726"
+violetColor = "#AB47BC"
+grayColor = "#8DA68E"
+
+chartCategoricalColors = ["#66BB6A", "#FFD54F", "#42A5F5", "#FFA726", "#AB47BC", "#EF5350", "#26C6DA"]
+
+dataframeBorderColor = "#2E5530"
+dataframeHeaderBackgroundColor = "#1A2E1B"
+
+[theme.dark.sidebar]
+backgroundColor = "#0A1A0B"
+secondaryBackgroundColor = "#142215"
+codeBackgroundColor = "#0F1A10"
+textColor = "#C8E6C9"
+borderColor = "#2E5530"
+primaryColor = "#FFD54F"

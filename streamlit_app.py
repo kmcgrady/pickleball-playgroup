@@ -171,16 +171,13 @@ present = []
 if viewing_today:
     st.subheader("Who's here today?")
 
-    has_saved_attendance = len(today_attendance) > 0
-    cols_per_row = 4
-    rows = [st.session_state.players[i : i + cols_per_row] for i in range(0, len(st.session_state.players), cols_per_row)]
-
-    for row_group in rows:
-        cols = st.columns(cols_per_row)
-        for col, name in zip(cols, row_group):
-            checked = name in today_attendance if has_saved_attendance else True
-            if col.checkbox(name, value=checked, key=f"present_{name}"):
-                present.append(name)
+    default = today_attendance if today_attendance else list(st.session_state.players)
+    present = st.multiselect(
+        "Select players",
+        options=st.session_state.players,
+        default=default,
+        label_visibility="collapsed",
+    )
 else:
     st.subheader(f"Attendance — {view_date:%B %-d, %Y}")
     if viewed_attendance:
