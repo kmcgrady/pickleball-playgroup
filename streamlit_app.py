@@ -9,7 +9,7 @@ from streamlit_gsheets import GSheetsConnection
 
 st.set_page_config(
     page_title="Pickleball playgroup",
-    page_icon=":material/sports_tennis:",
+    page_icon="🥒",
 )
 
 # --- Password gate (token persists in URL for the day) ---
@@ -22,15 +22,17 @@ if st.query_params.get("token") == _DAILY_TOKEN:
     st.session_state.authenticated = True
 
 if not st.session_state.get("authenticated"):
-    st.title(":material/sports_tennis: Pickleball playgroup")
-    pwd = st.text_input("Enter password", type="password")
+    st.markdown("# 🥒🏓")
+    st.title("Pickleball playgroup")
+    st.caption("*The court is calling. Enter the secret brine to proceed.*")
+    pwd = st.text_input("Enter password", type="password", placeholder="Shhh...")
     if pwd:
         if pwd == st.secrets["app_password"]:
             st.session_state.authenticated = True
             st.query_params["token"] = _DAILY_TOKEN
             st.rerun()
         else:
-            st.error("Incorrect password.")
+            st.error("Wrong password! That's a kitchen violation. 🚫")
     st.stop()
 
 # --- Constants ---
@@ -38,6 +40,46 @@ PLAYERS_PER_GAME = 4
 TODAY = datetime.now(ZoneInfo("America/Los_Angeles")).date().isoformat()
 DEFAULT_PLAYERS = ["Harrison", "Alex", "Sean", "Alanna", "David", "Ken", "Adel", "Jan"]
 GAME_COLS = ["Date", "Game", "Team A P1", "Team A P2", "Team B P1", "Team B P2", "Score A", "Score B"]
+
+# --- Fun stuff ---
+TEAM_NAMES_A = [
+    "The Dink Lords", "Pickle Rockets", "Net Ninjas", "Kitchen Crashers",
+    "Smash Pandas", "Lob Stars", "The Volley Llamas", "Brine Time",
+    "Drop Shot Divas", "The Third Shots",
+]
+TEAM_NAMES_B = [
+    "Dill With It", "Sweet Gherkins", "The Spin Doctors", "Court Jesters",
+    "Pickle Poppers", "Baseline Bandits", "Rally Cats", "No Man's Land",
+    "The Big Dills", "Ace Holes",
+]
+GAME_ANNOUNCEMENTS = [
+    "Let the dinking begin!",
+    "May the best picklers win!",
+    "Time to get briny!",
+    "This one's gonna be a real pickle...",
+    "Kitchen's open, let's cook!",
+    "No lobs, no glory!",
+    "Dink responsibly.",
+    "Rally on, brave picklers!",
+    "Third shot drop incoming!",
+    "Let's get this bread... and butter pickle.",
+]
+SIT_OUT_MESSAGES = [
+    "Hydrate and judge from the sidelines",
+    "Time to heckle from the bench",
+    "Enjoy the view, couch pickles",
+    "Rest those pickle legs",
+    "Scouting the competition (aka napping)",
+    "Bench warmers assemble",
+    "Strategic resting in progress",
+    "Recharging dink energy",
+]
+SCORE_REACTIONS = {
+    "blowout": ["Absolutely demolished!", "That wasn't even close!", "Call the pickle police!"],
+    "close": ["What a nail-biter!", "Down to the wire!", "Heart rate: elevated."],
+    "shutout": ["A SHUTOUT?! Ruthless.", "Bageled! Zero! Zip! Nada!", "Flawless victory."],
+    "tie": ["A tie?! That's not how pickleball works!", "Everyone's a winner? Sure, Jan."],
+}
 
 # --- Google Sheets helpers ---
 conn = st.connection("gsheets", type=GSheetsConnection)
@@ -66,7 +108,7 @@ def write_sheet(worksheet, df):
 
 # --- Sidebar: date picker (rendered early so VIEW_DATE is available) ---
 with st.sidebar:
-    st.header("View games", divider=True)
+    st.header("📅 View games", divider=True)
     view_date = st.date_input("Date", value=datetime.now(ZoneInfo("America/Los_Angeles")).date())
     VIEW_DATE = view_date.isoformat()
     viewing_today = VIEW_DATE == TODAY
@@ -104,8 +146,11 @@ def _parse_schedule(df, target_date):
     day_df = df[df["Date"].astype(str) == str(target_date)].sort_values("Game")
     sched = []
     for _, row in day_df.iterrows():
+        g_num = int(row["Game"])
+        # Stable random team names seeded by date + game number
+        rng = random.Random(f"{target_date}-{g_num}")
         sched.append({
-            "number": int(row["Game"]),
+            "number": g_num,
             "team_a": [str(row["Team A P1"]), str(row["Team A P2"])],
             "team_b": [str(row["Team B P1"]), str(row["Team B P2"])],
             "players": [
@@ -116,6 +161,8 @@ def _parse_schedule(df, target_date):
             ],
             "score_a": row.get("Score A"),
             "score_b": row.get("Score B"),
+            "team_a_name": rng.choice(TEAM_NAMES_A),
+            "team_b_name": rng.choice(TEAM_NAMES_B),
         })
     g_num = int(day_df["Game"].max()) if not day_df.empty else 0
     return sched, g_num
@@ -146,7 +193,7 @@ def _on_remove_player():
 
 # --- Sidebar: roster management ---
 with st.sidebar:
-    st.header("Roster", divider=True)
+    st.header("🧑‍🤝‍🧑 Roster", divider=True)
 
     st.text_input("Add a player", placeholder="Name", key="new_player_input")
     st.button("Add", icon=":material/person_add:", use_container_width=True, on_click=_on_add_player)
@@ -163,13 +210,25 @@ with st.sidebar:
         st.button("Remove", icon=":material/person_remove:", use_container_width=True, on_click=_on_remove_player)
 
 # --- Main area ---
-st.title(":material/sports_tennis: Pickleball playgroup")
+GREETINGS = [
+    "It's dink o'clock!",
+    "Ready to get pickled?",
+    "No kitchen violations today!",
+    "Paddles up, let's go!",
+    "Time to relish the moment.",
+    "Drop it like it's hot (shot).",
+    "In a pickle? Good.",
+    "Let's brine and grind!",
+]
+st.markdown("# 🥒🏓 Pickleball playgroup")
+# Stable greeting per day
+st.caption(f"*{random.Random(TODAY).choice(GREETINGS)}*")
 
 # --- Check-in ---
 present = []
 
 if viewing_today:
-    st.subheader("Who's here today?")
+    st.subheader("🙋 Who's here today?")
 
     default = today_attendance if today_attendance else list(st.session_state.players)
     present = st.multiselect(
@@ -179,7 +238,7 @@ if viewing_today:
         label_visibility="collapsed",
     )
 else:
-    st.subheader(f"Attendance — {view_date:%B %-d, %Y}")
+    st.subheader(f"📋 Attendance — {view_date:%B %-d, %Y}")
     if viewed_attendance:
         st.write(", ".join(viewed_attendance))
     else:
@@ -240,14 +299,21 @@ def generate_next_game(present_players: list[str], history: list[dict]) -> dict 
             selected.append(p)
 
     random.shuffle(selected)
-    return {"players": selected, "team_a": selected[:2], "team_b": selected[2:4]}
+    return {
+        "players": selected,
+        "team_a": selected[:2],
+        "team_b": selected[2:4],
+        "team_a_name": random.choice(TEAM_NAMES_A),
+        "team_b_name": random.choice(TEAM_NAMES_B),
+        "announcement": random.choice(GAME_ANNOUNCEMENTS),
+    }
 
 
 # --- Generate games ---
 if viewing_today:
-    st.subheader("Games")
+    st.subheader("⚔️ Games")
 else:
-    st.subheader(f"Games — {view_date:%B %-d, %Y}")
+    st.subheader(f"⚔️ Games — {view_date:%B %-d, %Y}")
 
 if viewing_today and st.button(
     "Generate next game",
@@ -280,6 +346,8 @@ if viewing_today and st.button(
         today_schedule.append(game)
         if not viewing_today:
             schedule.append(game)
+        st.toast(f"🏓 {game['announcement']}")
+        st.balloons()
 
 
 def _save_games_df(updated):
@@ -337,9 +405,12 @@ if schedule and st.button("Reset games for this day", icon=":material/restart_al
 # --- Display schedule ---
 if schedule:
     for game in reversed(schedule):
+        team_a_name = game.get("team_a_name", "Team A")
+        team_b_name = game.get("team_b_name", "Team B")
+
         with st.container(border=True):
             header_col, delete_col = st.columns([5, 1], vertical_alignment="center")
-            header_col.markdown(f"**Game {game['number']}**")
+            header_col.markdown(f"**🏓 Game {game['number']}** — *{team_a_name}* ⚡ *{team_b_name}*")
             if delete_col.button(
                 ":material/delete:",
                 key=f"del_{game['number']}",
@@ -348,8 +419,8 @@ if schedule:
                 confirm_delete_game(game["number"])
 
             col1, col2 = st.columns(2)
-            col1.metric("Team A", " & ".join(game["team_a"]))
-            col2.metric("Team B", " & ".join(game["team_b"]))
+            col1.metric(team_a_name, " & ".join(game["team_a"]))
+            col2.metric(team_b_name, " & ".join(game["team_b"]))
 
             # --- Score inputs ---
             score_a_val = game["score_a"] if pd.notna(game.get("score_a")) else None
@@ -357,14 +428,14 @@ if schedule:
 
             s1, s2, s_btn = st.columns([2, 2, 1], vertical_alignment="bottom")
             new_score_a = s1.number_input(
-                "Team A score",
+                f"{team_a_name} score",
                 min_value=0,
                 max_value=99,
                 value=int(score_a_val) if score_a_val is not None else 0,
                 key=f"score_a_{game['number']}",
             )
             new_score_b = s2.number_input(
-                "Team B score",
+                f"{team_b_name} score",
                 min_value=0,
                 max_value=99,
                 value=int(score_b_val) if score_b_val is not None else 0,
@@ -372,15 +443,38 @@ if schedule:
             )
             if s_btn.button("Save", key=f"save_score_{game['number']}", use_container_width=True):
                 _update_score(game["number"], new_score_a, new_score_b)
-                st.toast(f"Score saved for Game {game['number']}!")
+                # Fun score reaction
+                a, b = new_score_a, new_score_b
+                if a == b:
+                    reaction = random.choice(SCORE_REACTIONS["tie"])
+                elif a == 0 or b == 0:
+                    reaction = random.choice(SCORE_REACTIONS["shutout"])
+                elif abs(a - b) >= 6:
+                    reaction = random.choice(SCORE_REACTIONS["blowout"])
+                elif abs(a - b) <= 2:
+                    reaction = random.choice(SCORE_REACTIONS["close"])
+                else:
+                    reaction = f"Score saved for Game {game['number']}!"
+                st.toast(f"🏓 {reaction}")
+
+            # Show score verdict inline if both scores are recorded
+            if score_a_val is not None and score_b_val is not None:
+                sa, sb = int(score_a_val), int(score_b_val)
+                if sa > sb:
+                    st.caption(f"🏆 **{team_a_name}** win {sa}–{sb}")
+                elif sb > sa:
+                    st.caption(f"🏆 **{team_b_name}** win {sb}–{sa}")
+                elif sa == sb and sa > 0:
+                    st.caption(f"🤝 Tied {sa}–{sb} — *did someone forget to finish?*")
 
         if viewing_today and present:
             sitting = [p for p in present if p not in game["players"]]
             if sitting:
-                st.caption(f":material/weekend: Sitting out: {', '.join(sitting)}")
+                sit_msg = random.Random(game["number"]).choice(SIT_OUT_MESSAGES)
+                st.caption(f":material/weekend: {', '.join(sitting)} — *{sit_msg}*")
 
     # --- Play tracker ---
-    st.subheader("Play count")
+    st.subheader("📊 Play count")
     all_day_players = present if viewing_today else sorted({p for g in schedule for p in g["players"]})
     play_counts = {p: 0 for p in all_day_players}
     for game in schedule:
@@ -389,8 +483,28 @@ if schedule:
                 play_counts[p] += 1
 
     if play_counts:
-        count_cols = st.columns(min(len(play_counts), 4))
-        for i, (player, count) in enumerate(sorted(play_counts.items(), key=lambda x: -x[1])):
-            count_cols[i % len(count_cols)].metric(player, f"{count} games")
+        def _title(count, rank, total):
+            if rank == 0:
+                return "👑 Court Monarch"
+            if count == 0:
+                return "🪑 Professional Spectator"
+            if rank == total - 1 and count > 0:
+                return "🌱 Fresh Legs"
+            if count >= 5:
+                return "🔥 Iron Pickler"
+            if count >= 3:
+                return "💪 Warmed Up"
+            return "🏓 Getting Started"
+
+        sorted_players = sorted(play_counts.items(), key=lambda x: -x[1])
+        count_cols = st.columns(min(len(sorted_players), 4))
+        for i, (player, count) in enumerate(sorted_players):
+            title = _title(count, i, len(sorted_players))
+            count_cols[i % len(count_cols)].metric(
+                player,
+                f"{count} games",
+                help=title,
+            )
+            count_cols[i % len(count_cols)].caption(title)
 else:
-    st.caption("No games for today.")
+    st.markdown("*🦗 No games yet... the court is lonely.*")
