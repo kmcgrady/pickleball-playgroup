@@ -361,9 +361,13 @@ def _delete_game(game_num):
     _save_games_df(games_df[~mask].reset_index(drop=True))
 
 
-def _update_score(game_num, score_a, score_b):
-    """Write scores for a specific game."""
+def _update_game(game_num, ta_p1, ta_p2, tb_p1, tb_p2, score_a, score_b):
+    """Write player names and scores for a specific game."""
     mask = (games_df["Date"].astype(str) == VIEW_DATE) & (games_df["Game"] == game_num)
+    games_df.loc[mask, "Team A P1"] = ta_p1
+    games_df.loc[mask, "Team A P2"] = ta_p2
+    games_df.loc[mask, "Team B P1"] = tb_p1
+    games_df.loc[mask, "Team B P2"] = tb_p2
     games_df.loc[mask, "Score A"] = score_a
     games_df.loc[mask, "Score B"] = score_b
     _save_games_df(games_df)
@@ -418,32 +422,77 @@ if schedule:
             ):
                 confirm_delete_game(game["number"])
 
-            col1, col2 = st.columns(2)
-            col1.metric(team_a_name, " & ".join(game["team_a"]))
-            col2.metric(team_b_name, " & ".join(game["team_b"]))
-
-            # --- Score inputs ---
             score_a_val = game["score_a"] if pd.notna(game.get("score_a")) else None
             score_b_val = game["score_b"] if pd.notna(game.get("score_b")) else None
 
-            s1, s2, s_btn = st.columns([2, 2, 1], vertical_alignment="bottom")
-            new_score_a = s1.number_input(
-                f"{team_a_name} score",
-                min_value=0,
-                max_value=99,
-                value=int(score_a_val) if score_a_val is not None else 0,
-                key=f"score_a_{game['number']}",
-            )
-            new_score_b = s2.number_input(
-                f"{team_b_name} score",
-                min_value=0,
-                max_value=99,
-                value=int(score_b_val) if score_b_val is not None else 0,
-                key=f"score_b_{game['number']}",
-            )
-            if s_btn.button("Save", key=f"save_score_{game['number']}", use_container_width=True):
-                _update_score(game["number"], new_score_a, new_score_b)
-                # Fun score reaction
+            # Build player options, including any players in this game who may have left the roster
+            player_options = list(st.session_state.players)
+            for p in game["team_a"] + game["team_b"]:
+                if p not in player_options:
+                    player_options.append(p)
+
+            def _pidx(name):
+                try:
+                    return player_options.index(name)
+                except ValueError:
+                    return 0
+
+            with st.form(f"game_{game['number']}", border=False):
+                a_col, b_col = st.columns(2)
+                with a_col:
+                    st.caption(f"**{team_a_name}**")
+                    a1c, a2c = st.columns(2)
+                    ta_p1 = a1c.selectbox(
+                        "Team A P1",
+                        options=player_options,
+                        index=_pidx(game["team_a"][0]),
+                        key=f"ta_p1_{game['number']}",
+                        label_visibility="collapsed",
+                    )
+                    ta_p2 = a2c.selectbox(
+                        "Team A P2",
+                        options=player_options,
+                        index=_pidx(game["team_a"][1]),
+                        key=f"ta_p2_{game['number']}",
+                        label_visibility="collapsed",
+                    )
+                with b_col:
+                    st.caption(f"**{team_b_name}**")
+                    b1c, b2c = st.columns(2)
+                    tb_p1 = b1c.selectbox(
+                        "Team B P1",
+                        options=player_options,
+                        index=_pidx(game["team_b"][0]),
+                        key=f"tb_p1_{game['number']}",
+                        label_visibility="collapsed",
+                    )
+                    tb_p2 = b2c.selectbox(
+                        "Team B P2",
+                        options=player_options,
+                        index=_pidx(game["team_b"][1]),
+                        key=f"tb_p2_{game['number']}",
+                        label_visibility="collapsed",
+                    )
+
+                s1, s2 = st.columns(2)
+                new_score_a = s1.number_input(
+                    f"{team_a_name} score",
+                    min_value=0,
+                    max_value=99,
+                    value=int(score_a_val) if score_a_val is not None else 0,
+                    key=f"score_a_{game['number']}",
+                )
+                new_score_b = s2.number_input(
+                    f"{team_b_name} score",
+                    min_value=0,
+                    max_value=99,
+                    value=int(score_b_val) if score_b_val is not None else 0,
+                    key=f"score_b_{game['number']}",
+                )
+                submitted = st.form_submit_button("Save", use_container_width=True)
+
+            if submitted:
+                _update_game(game["number"], ta_p1, ta_p2, tb_p1, tb_p2, new_score_a, new_score_b)
                 a, b = new_score_a, new_score_b
                 if a == b:
                     reaction = random.choice(SCORE_REACTIONS["tie"])
@@ -454,7 +503,7 @@ if schedule:
                 elif abs(a - b) <= 2:
                     reaction = random.choice(SCORE_REACTIONS["close"])
                 else:
-                    reaction = f"Score saved for Game {game['number']}!"
+                    reaction = f"Game {game['number']} saved!"
                 st.toast(f"🏓 {reaction}")
 
             # Show score verdict inline if both scores are recorded
