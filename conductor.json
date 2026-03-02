@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "setup": "python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt",
+    "setup": "cp \"$(git worktree list --porcelain | head -1 | sed 's/worktree //')/.streamlit/secrets.toml\" .streamlit/secrets.toml && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt",
     "run": "streamlit run streamlit_app.py"
   }
 }
