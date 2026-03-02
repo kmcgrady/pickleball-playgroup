@@ -119,6 +119,9 @@ with st.sidebar:
     view_date = st.date_input("Date", value=datetime.now(ZoneInfo("America/Los_Angeles")).date())
     VIEW_DATE = view_date.isoformat()
     viewing_today = VIEW_DATE == TODAY
+    if st.button("Refresh data", icon=":material/refresh:", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
 
 # --- Load data from sheets ---
 players_df = read_sheet("Players", ["Name"])
