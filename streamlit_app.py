@@ -25,8 +25,15 @@ if not st.session_state.get("authenticated"):
     st.markdown("# 🥒🏓")
     st.title("Pickleball playgroup")
     st.caption("*The court is calling. Enter the secret brine to proceed.*")
-    pwd = st.text_input("Enter password", type="password", placeholder="Shhh...")
-    if pwd:
+    with st.form("password_form"):
+        pwd = st.text_input("Enter password", type="password", placeholder="Shhh...")
+        submitted = st.form_submit_button(
+            "Enter the court",
+            icon=":material/lock_open:",
+            use_container_width=True,
+            type="primary",
+        )
+    if submitted and pwd:
         if pwd == st.secrets["app_password"]:
             st.session_state.authenticated = True
             st.query_params["token"] = _DAILY_TOKEN
@@ -560,7 +567,11 @@ if schedule:
                     value=int(score_b_val) if score_b_val is not None else 0,
                     key=f"score_b_{game['number']}",
                 )
-                submitted = st.form_submit_button("Save", use_container_width=True)
+                submitted = st.form_submit_button(
+                    "Save",
+                    icon=":material/save:",
+                    use_container_width=True,
+                )
 
             if submitted:
                 _update_game(game["number"], ta_p1, ta_p2, tb_p1, tb_p2, new_score_a, new_score_b)
