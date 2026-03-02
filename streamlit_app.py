@@ -588,14 +588,14 @@ if schedule:
         team_b_name = game.get("team_b_name", "Team B")
 
         with st.container(border=True):
-            header_col, delete_col = st.columns([5, 1], vertical_alignment="center")
-            header_col.markdown(f"**🏓 Game {game['number']}** — *{team_a_name}* ⚡ *{team_b_name}*")
-            if delete_col.button(
-                ":material/delete:",
-                key=f"del_{game['number']}",
-                help="Delete this game",
-            ):
-                confirm_delete_game(game["number"])
+            with st.container(horizontal=True, horizontal_alignment="distribute", vertical_alignment="center"):
+                st.markdown(f"**🏓 Game {game['number']}** — *{team_a_name}* ⚡ *{team_b_name}*")
+                if st.button(
+                    ":material/delete:",
+                    key=f"del_{game['number']}",
+                    help="Delete this game",
+                ):
+                    confirm_delete_game(game["number"])
 
             score_a_val = game["score_a"] if pd.notna(game.get("score_a")) else None
             score_b_val = game["score_b"] if pd.notna(game.get("score_b")) else None
