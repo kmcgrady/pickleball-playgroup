@@ -9,6 +9,7 @@ baseFontWeight = 400
 headingFontSizes = ["32px", "24px", "20px", "16px", "14px", "12px"]
 headingFontWeights = [700, 600, 600, 500, 500, 500]
 linkUnderline = false
+chartCategoricalColors = ["#66BB6A", "#FFD54F", "#42A5F5", "#FFA726", "#AB47BC", "#EF5350", "#26C6DA"]
 baseRadius = "10px"
 buttonRadius = "full"
 showWidgetBorder = true
@@ -38,8 +39,6 @@ blueColor = "#1565C0"
 orangeColor = "#EF6C00"
 violetColor = "#6A1B9A"
 grayColor = "#546E52"
-
-chartCategoricalColors = ["#2E7D32", "#F9A825", "#1565C0", "#EF6C00", "#6A1B9A", "#C62828", "#00838F"]
 
 dataframeBorderColor = "#C8E6C9"
 dataframeHeaderBackgroundColor = "#E8F5E9"
@@ -76,8 +75,6 @@ blueColor = "#42A5F5"
 orangeColor = "#FFA726"
 violetColor = "#AB47BC"
 grayColor = "#8DA68E"
-
-chartCategoricalColors = ["#66BB6A", "#FFD54F", "#42A5F5", "#FFA726", "#AB47BC", "#EF5350", "#26C6DA"]
 
 dataframeBorderColor = "#2E5530"
 dataframeHeaderBackgroundColor = "#1A2E1B"
