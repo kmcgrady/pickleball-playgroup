@@ -278,31 +278,82 @@ def generate_next_game(present_players: list[str], history: list[dict]) -> dict 
     if len(eligible) < PLAYERS_PER_GAME:
         eligible = list(present_players)
 
-    # Prioritise players who sat out last game
+    # Build weighted pool: weight based on total games sat today
+    weighted_pool: list[str] = []
     if history:
-        last_played = set(history[-1]["players"])
-        sat_last = [p for p in eligible if p not in last_played]
-        still_eligible = [p for p in eligible if p in last_played]
+        for p in eligible:
+            games_sat = sum(1 for g in history if p not in g["players"])
+            entries = 1 + games_sat  # 1 base + 1 per game sat
+            for _ in range(entries):
+                weighted_pool.append(p)
     else:
-        sat_last = []
-        still_eligible = eligible
+        weighted_pool = list(eligible)
 
-    selected: list[str] = []
-    random.shuffle(sat_last)
-    random.shuffle(still_eligible)
+    # Collect past partnerships and opponent matchups to diversify teams
+    past_partners: set[frozenset[str]] = set()
+    past_opponents: set[frozenset[str]] = set()
+    for g in history:
+        past_partners.add(frozenset(g["team_a"]))
+        past_partners.add(frozenset(g["team_b"]))
+        for a in g["team_a"]:
+            for b in g["team_b"]:
+                past_opponents.add(frozenset([a, b]))
 
-    for p in sat_last:
-        if len(selected) < PLAYERS_PER_GAME:
-            selected.append(p)
-    for p in still_eligible:
-        if len(selected) < PLAYERS_PER_GAME:
-            selected.append(p)
+    last_players = set(history[-1]["players"]) if history else set()
 
-    random.shuffle(selected)
+    # Try to pick players that aren't an exact repeat of last game
+    best_selected: list[str] | None = None
+    best_split: tuple[list[str], list[str]] | None = None
+    best_repeat_score = float("inf")
+    max_attempts = 1 if len(eligible) <= PLAYERS_PER_GAME else 20
+
+    for _ in range(max_attempts):
+        selected: list[str] = []
+        random.shuffle(weighted_pool)
+        for p in weighted_pool:
+            if p not in selected and len(selected) < PLAYERS_PER_GAME:
+                selected.append(p)
+
+        # Skip exact repeat of last game's players (retry if possible)
+        if set(selected) == last_players and best_selected is None:
+            best_selected = selected
+            best_split = (selected[:2], selected[2:4])
+            continue
+
+        # Find the team split with fewest repeat partnerships and opponents
+        # 4 players have 3 possible splits into pairs
+        splits = [
+            (selected[:2], selected[2:4]),
+            ([selected[0], selected[2]], [selected[1], selected[3]]),
+            ([selected[0], selected[3]], [selected[1], selected[2]]),
+        ]
+        random.shuffle(splits)
+
+        for team_a, team_b in splits:
+            partner_repeats = sum(
+                1 for pair in (frozenset(team_a), frozenset(team_b))
+                if pair in past_partners
+            )
+            opponent_repeats = sum(
+                1 for a in team_a for b in team_b
+                if frozenset([a, b]) in past_opponents
+            )
+            # Partners weighted higher — playing with someone matters more than against
+            repeat_score = partner_repeats * 2 + opponent_repeats
+            if repeat_score < best_repeat_score:
+                best_repeat_score = repeat_score
+                best_selected = selected
+                best_split = (team_a, team_b)
+
+        if best_repeat_score == 0 and set(best_selected) != last_players:
+            break  # found an ideal pick — no repeats, different players
+
+    selected = best_selected
+    team_a, team_b = best_split
     return {
         "players": selected,
-        "team_a": selected[:2],
-        "team_b": selected[2:4],
+        "team_a": team_a,
+        "team_b": team_b,
         "team_a_name": random.choice(TEAM_NAMES_A),
         "team_b_name": random.choice(TEAM_NAMES_B),
         "announcement": random.choice(GAME_ANNOUNCEMENTS),
@@ -314,6 +365,26 @@ if viewing_today:
     st.subheader("⚔️ Games")
 else:
     st.subheader(f"⚔️ Games — {view_date:%B %-d, %Y}")
+
+if viewing_today:
+    with st.expander("How does matchmaking work?"):
+        st.markdown(
+            """
+**Fair rotation** — Players who've sat out more games today are more likely to
+be picked next. The more you sit, the higher your chances.
+
+**No back-to-back-to-back** — If you've played the last 2 games in a row,
+you're guaranteed a break (with 6+ players).
+
+**Fresh teams** — The app tries to mix up partners *and* opponents so you're
+not stuck with the same matchup all day.
+
+**No exact repeats** — It avoids running the same 4 players twice in a row.
+
+*With only 4–5 players, everyone plays nearly every game — there just
+aren't enough people to rotate!*
+"""
+        )
 
 if viewing_today and st.button(
     "Generate next game",
