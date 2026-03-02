@@ -330,17 +330,24 @@ st.caption(f"*{random.Random(TODAY).choice(GREETINGS)}*")
 
 # --- Check-in ---
 present = []
+generate_submitted = False
 
 if viewing_today:
     st.subheader("🙋 Who's here today?")
 
     default = today_attendance if today_attendance else list(st.session_state.players)
-    present = st.multiselect(
-        "Select players",
-        options=st.session_state.players,
-        default=default,
-        label_visibility="collapsed",
-    )
+    with st.form("attendance_form", border=False):
+        present = st.multiselect(
+            "Select players",
+            options=st.session_state.players,
+            default=default,
+            label_visibility="collapsed",
+        )
+        generate_submitted = st.form_submit_button(
+            "Generate next game",
+            icon=":material/casino:",
+            type="primary",
+        )
 else:
     st.subheader(f"📋 Attendance — {view_date:%B %-d, %Y}")
     if viewed_attendance:
@@ -490,12 +497,7 @@ aren't enough people to rotate!*
 """
         )
 
-if viewing_today and st.button(
-    "Generate next game",
-    icon=":material/casino:",
-    type="primary",
-    disabled=len(present) < PLAYERS_PER_GAME,
-):
+if viewing_today and generate_submitted and len(present) >= PLAYERS_PER_GAME:
     _save_attendance()
     game = generate_next_game(present, today_schedule)
     if game:
